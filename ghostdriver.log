@@ -1,0 +1,6 @@
+PhantomJS is launching GhostDriver...
+[INFO  - 2016-01-10T16:39:06.255Z] GhostDriver - Main - running on port 59271
+[INFO  - 2016-01-10T16:39:06.288Z] Session [aa3fc6c0-b7b8-11e5-b09e-23eaef46e34e] - page.settings - {"XSSAuditingEnabled":false,"javascriptCanCloseWindows":true,"javascriptCanOpenWindows":true,"javascriptEnabled":true,"loadImages":false,"localToRemoteUrlAccessEnabled":false,"userAgent":"Mozilla/5.0 (Macintosh; Intel Mac OS X) AppleWebKit/534.34 (KHTML, like Gecko) PhantomJS/1.9.8 Safari/534.34","webSecurityEnabled":true}
+[INFO  - 2016-01-10T16:39:06.288Z] Session [aa3fc6c0-b7b8-11e5-b09e-23eaef46e34e] - page.customHeaders:  - {}
+[INFO  - 2016-01-10T16:39:06.288Z] Session [aa3fc6c0-b7b8-11e5-b09e-23eaef46e34e] - Session.negotiatedCapabilities - {"browserName":"phantomjs","version":"1.9.8","driverName":"ghostdriver","driverVersion":"1.1.0","platform":"mac-unknown-32bit","javascriptEnabled":true,"takesScreenshot":true,"handlesAlerts":false,"databaseEnabled":false,"locationContextEnabled":false,"applicationCacheEnabled":false,"browserConnectionEnabled":false,"cssSelectorsEnabled":true,"webStorageEnabled":false,"rotatable":false,"acceptSslCerts":false,"nativeEvents":true,"proxy":{"proxyType":"direct"}}
+[INFO  - 2016-01-10T16:39:06.288Z] SessionManagerReqHand - _postNewSessionCommand - New Session Created: aa3fc6c0-b7b8-11e5-b09e-23eaef46e34e
