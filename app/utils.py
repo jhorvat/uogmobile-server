@@ -29,5 +29,6 @@ class PhantomDriver(webdriver.PhantomJS):
 def to_json(data):
     """
     More clear interface for json_dumps
+    :return: JSON string
     """
     return json_dumps(data, separators=(',',':'))
