@@ -1,3 +1,4 @@
 expirements
 *.pyc
 ghostdriver.log
+config.py
