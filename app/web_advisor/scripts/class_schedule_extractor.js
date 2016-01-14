@@ -16,6 +16,10 @@ function getMeetingInfo(el) {
         }
     });
 
+    if (!Object.keys(meetingInfo).length || (meetingInfo["days"] && $.inArray("TBA", meetingInfo["days"]) != -1)) {
+        return null
+    }
+
     return meetingInfo;
 }
 

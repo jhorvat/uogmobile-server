@@ -28,6 +28,9 @@ def teardown_request(exception):
 def requires_login(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
+        """
+        Fill the login form before moving on to the actual request
+        """
         wd = g.get("wd", None)
 
         if not wd:
@@ -37,6 +40,7 @@ def requires_login(f):
         wd.find_elements_by_selector("#USER_NAME").send_keys(app.config["USER_NAME"])
         wd.find_elements_by_selector("#CURR_PWD").send_keys(app.config["PASSWORD"])
         wd.find_elements_by_selector("#content > div.screen.UTAUTH01 > form").submit()
+        print "Logged in"
 
         return f(*args, **kwargs)
     return decorated_function
@@ -54,6 +58,7 @@ def schedule():
         abort(500)
 
     wd.get("https://webadvisor.uoguelph.ca/WebAdvisor/WebAdvisor?CONSTITUENCY=WBST&type=P&pid=ST-WESTS13A") # Select the current semester
+    print "Fetched term select"
     wd.find_elements_by_selector("#VAR4").select_by_value("W16")
     wd.find_elements_by_selector("#content > div.screen.WESTS13A > form").submit()
 

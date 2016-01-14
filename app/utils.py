@@ -1,6 +1,7 @@
 from selenium import webdriver
 from selenium.webdriver.support.ui import Select
 from json import dumps as json_dumps
+from json import loads as from_json
 
 class PhantomDriver(webdriver.PhantomJS):
     """
