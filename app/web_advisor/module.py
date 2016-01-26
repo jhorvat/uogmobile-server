@@ -49,6 +49,7 @@ def login():
     data = request.get_json()
 
     if data["cookie"]:
+        # Separate the cookies string into a list of key, value tuples
         data["cookie"] = [cookie.split("=", 1) for cookie in data["cookie"].replace(" ", "").split(";")]
     else:
         abort(400)
@@ -58,19 +59,19 @@ def login():
 
     for name, value in data["cookie"]:
         if name.startswith("__"):
-            if name == "__utmb":
+            if name == "__utmb": # __utmb's value doesn't vary between its two instances
                 cookie_payload["__utmb"]["value"] = value
                 cookie_payload["__utmb_prime"]["value"] = value
             elif value.endswith("**"):
                 cookie_payload[name]["value"] = value
             else:
                 cookie_payload[name + "_prime"]["value"] = value
-        elif name not in cookie_payload:
+        elif name not in cookie_payload: # Add the session value to the machine-unique key
             cookie_payload["token"]["value"] = value
         else:
             cookie_payload[name]["value"] = value
 
-    session["cookies"] = cookie_payload
+    session["cookies"] = cookie_payload # Save the completed injection payload to the current session
     return "Success"
 
 @mod.route("/schedule", methods=['GET'])
