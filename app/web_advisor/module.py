@@ -31,7 +31,6 @@ def requires_login(f):
         """
         Get the WebAdvisor cookie payload
         """
-        cookie_payload = constants.WEB_ADVISOR_COOKIES_TEMPLATE()
         wd = g.get("wd", None)
 
         if not wd:
@@ -39,6 +38,8 @@ def requires_login(f):
 
         if "cookies" not in session:
             abort(403)
+
+        cookie_payload = session["cookies"]
 
         wd.get("https://webadvisor.uoguelph.ca/WebAdvisor/WebAdvisor?CONSTITUENCY=WBDF&type=P&pid=UT-LGRQ&PROCESS=-UTAUTH01")
         for cookie in wd.get_cookies():
@@ -48,20 +49,6 @@ def requires_login(f):
             """
             if cookie["name"].isdigit():
                 cookie_payload["token"]["name"] = cookie["name"]
-
-        for name, value in session["cookies"]:
-            if name.startswith("__"):
-                if name == "__utmb":
-                    cookie_payload["__utmb"]["value"] = value
-                    cookie_payload["__utmb_prime"]["value"] = value
-                elif value.endswith("**"):
-                    cookie_payload[name]["value"] = value
-                else:
-                    cookie_payload[name + "_prime"]["value"] = value
-            elif name not in cookie_payload:
-                cookie_payload["token"]["value"] = value
-            else:
-                cookie_payload[name]["value"] = value
 
         wd.delete_all_cookies()
         map(lambda (k, v): wd.add_cookie(v), cookie_payload.iteritems())
@@ -76,7 +63,26 @@ def login():
     if not data["cookie"]:
         abort(400)
 
-    session["cookies"] = [cookie.split("=", 1) for cookie in data["cookie"].replace(" ", "").split(";")]
+    cookie_payload = constants.WEB_ADVISOR_COOKIES_TEMPLATE()
+
+    wd = g.get("wd", None)
+    wd.get("https://webadvisor.uoguelph.ca/WebAdvisor/WebAdvisor?CONSTITUENCY=WBDF&type=P&pid=UT-LGRQ&PROCESS=-UTAUTH01")
+
+    for name, value in [cookie.split("=", 1) for cookie in data["cookie"].replace(" ", "").split(";")]:
+        if name.startswith("__"):
+            if name == "__utmb":
+                cookie_payload["__utmb"]["value"] = value
+                cookie_payload["__utmb_prime"]["value"] = value
+            elif value.endswith("**"):
+                cookie_payload[name]["value"] = value
+            else:
+                cookie_payload[name + "_prime"]["value"] = value
+        elif name not in cookie_payload:
+            cookie_payload["token"]["value"] = value
+        else:
+            cookie_payload[name]["value"] = value
+
+    session["cookies"] = cookie_payload
     return "Success"
 
 @mod.route("/schedule", methods=['GET'])
@@ -92,8 +98,8 @@ def schedule():
         abort(500)
 
     wd.get("https://webadvisor.uoguelph.ca/WebAdvisor/WebAdvisor?CONSTITUENCY=WBST&type=P&pid=ST-WESTS13A") # Select the current semester
-    return send_file(io.BytesIO(wd.get_screenshot_as_png()), attachment_filename='logo.png', mimetype='image/png')
-    # wd.find_elements_by_selector("#VAR4").select_by_value("W16")
-    # wd.find_elements_by_selector("#content > div.screen.WESTS13A > form").submit()
-    #
-    # return to_json(wd.execute_script(constants.JS_SCRIPTS["class_schedule_extractor"])) # Run the parser script on the page and return the script's result
+    wd.find_elements_by_selector("#VAR4").select_by_value("W16")
+    wd.find_elements_by_selector("#content > div.screen.WESTS13A > form").submit()
+
+    return to_json(wd.execute_script(constants.JS_SCRIPTS["class_schedule_extractor"])) # Run the parser script on the page and return the script's result
+    # return send_file(io.BytesIO(wd.get_screenshot_as_png()), attachment_filename='logo.png', mimetype='image/png')
