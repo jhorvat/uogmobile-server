@@ -1,6 +1,6 @@
 import io
 from functools import wraps
-from flask import Blueprint, request, session, send_file, g, abort
+from flask import Blueprint, request, session, send_file, g, abort, jsonify
 from flask import current_app as app
 
 import constants
@@ -72,7 +72,7 @@ def login():
             cookie_payload[name]["value"] = value
 
     session["cookies"] = cookie_payload # Save the completed injection payload to the current session
-    return "Success"
+    return jsonify({})
 
 @mod.route("/schedule", methods=['GET'])
 @requires_login
@@ -90,5 +90,5 @@ def schedule():
     wd.find_elements_by_selector("#VAR4").select_by_value("W16")
     wd.find_elements_by_selector("#content > div.screen.WESTS13A > form").submit()
 
-    return to_json(wd.execute_script(constants.JS_SCRIPTS["class_schedule_extractor"])) # Run the parser script on the page and return the script's result
+    return jsonify(wd.execute_script(constants.JS_SCRIPTS["class_schedule_extractor"])) # Run the parser script on the page and return the script's result
     # return send_file(io.BytesIO(wd.get_screenshot_as_png()), attachment_filename='logo.png', mimetype='image/png')
