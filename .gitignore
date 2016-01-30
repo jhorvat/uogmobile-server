@@ -2,3 +2,4 @@ expirements
 *.pyc
 ghostdriver.log
 config.py
+.sync-config.cson
