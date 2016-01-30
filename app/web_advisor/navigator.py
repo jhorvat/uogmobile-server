@@ -34,4 +34,6 @@ class Navigator(PhantomDriver):
                 cookie_payload["token"]["name"] = cookie["name"]
 
         self.delete_all_cookies()
-        map(lambda (k, v): self.add_cookie(v), cookie_payload.iteritems()) # There's no bulk cookie addition so add each one individually
+
+        for _, cookie in cookie_payload.items(): # There's no bulk cookie addition so add each one individually
+            self.add_cookie(cookie)

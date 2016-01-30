@@ -25,6 +25,7 @@ class PhantomDriver(webdriver.PhantomJS):
         if len(elements) == 1:
             return elements[0]
 
+        print(elements)
         return elements
 
 def to_json(data):

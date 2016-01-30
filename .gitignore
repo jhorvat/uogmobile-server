@@ -3,3 +3,4 @@ expirements
 ghostdriver.log
 config.py
 .sync-config.cson
+__pycache__/

@@ -3,9 +3,9 @@ from functools import wraps
 from flask import Blueprint, request, session, send_file, g, abort, jsonify
 from flask import current_app as app
 
-import constants
+from . import constants
 from app.utils import to_json
-from navigator import Navigator
+from .navigator import Navigator
 
 # TODO: Migrate to WebDriver to context manager maybe
 mod = Blueprint('web_advisor', __name__, url_prefix="/webadvisor")
