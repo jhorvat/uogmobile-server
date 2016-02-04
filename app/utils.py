@@ -13,9 +13,7 @@ class PhantomDriver(webdriver.Remote):
         Construct a new PhantomDriver object. Just calls the PhantomJS constructor
         """
         # webdriver.PhantomJS.__init__(self, service_args= ["--load-images=false"])
-        print("PhantomDriver constructor")
-        super(PhantomDriver, self).__init__(command_executor='http://localhost:8910/wd/hub', desired_capabilities=DesiredCapabilities.PHANTOMJS)
-        print("PhantomDriver constructed")
+        super(PhantomDriver, self).__init__(command_executor='http://localhost:4444/', desired_capabilities=DesiredCapabilities.PHANTOMJS)
 
     def find_elements_by_selector(self, selector):
         """

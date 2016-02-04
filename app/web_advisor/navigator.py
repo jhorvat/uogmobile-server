@@ -13,9 +13,7 @@ class Navigator(PhantomDriver):
         Super init and then navigate to the login page since we always want there to be a page immediately
         """
         super(Navigator, self).__init__()
-        print("Init super")
         self.login_page()
-        print("Loaded page")
 
     def login_page(self):
         self.get(self._login_url)
@@ -33,9 +31,13 @@ class Navigator(PhantomDriver):
             info itself isn't cross-referenced so as long as the cookie name and value match indepently we're good
             """
             if cookie["name"].isdigit():
+                print("Unique ID is " + cookie["name"])
                 cookie_payload["token"]["name"] = cookie["name"]
 
         self.delete_all_cookies()
 
         for _, cookie in cookie_payload.items(): # There's no bulk cookie addition so add each one individually
-            self.add_cookie(cookie)
+            try:
+                self.add_cookie(cookie)
+            except:
+                print("Failed to set cookie\n" + str(cookie))

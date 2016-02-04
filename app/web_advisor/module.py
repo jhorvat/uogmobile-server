@@ -15,7 +15,6 @@ def before_request():
     """
     Preflight request setup
     """
-    print("Setting up Navigator")
     g.wd = Navigator() # Get a PhantomJS session and load it into the request context
 
 @mod.teardown_request
@@ -50,7 +49,8 @@ def requires_login(f):
 def login():
     data = request.get_json()
 
-    if data["cookie"]:
+    print(str(data))
+    if "cookie" in data and data["cookie"]:
         # Separate the cookies string into a list of key, value tuples
         data["cookie"] = [cookie.split("=", 1) for cookie in data["cookie"].replace(" ", "").split(";")]
     else:
@@ -83,15 +83,22 @@ def schedule():
     /webadvisor/schedule
     Gets the current semester's schedule from WebAdvisor
     """
-    print("Got schedule request")
     wd = g.get("wd", None)
 
     if not wd:
         abort(500)
 
-    wd.class_schedule()
-    wd.find_elements_by_selector("#VAR4").select_by_value("W16")
-    wd.find_elements_by_selector("#content > div.screen.WESTS13A > form").submit()
+    try:
+        wd.class_schedule()
+        wd.find_elements_by_selector("#VAR4").select_by_value("W16")
+        wd.find_elements_by_selector("#content > div.screen.WESTS13A > form").submit()
+    except:
+        wd.get_screenshot_as_file("error.png")
+        abort(500)
 
     return jsonify(wd.execute_script(constants.JS_SCRIPTS["class_schedule_extractor"])) # Run the parser script on the page and return the script's result
     # return send_file(io.BytesIO(wd.get_screenshot_as_png()), attachment_filename='logo.png', mimetype='image/png')
+
+@mod.route("/error", methods=['GET'])
+def error_viewer():
+    return send_file("../error.png", mimetype='image/png')
