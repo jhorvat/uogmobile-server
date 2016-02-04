@@ -13,7 +13,9 @@ class Navigator(PhantomDriver):
         Super init and then navigate to the login page since we always want there to be a page immediately
         """
         super(Navigator, self).__init__()
+        print("Init super")
         self.login_page()
+        print("Loaded page")
 
     def login_page(self):
         self.get(self._login_url)

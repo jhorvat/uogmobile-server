@@ -15,6 +15,7 @@ def before_request():
     """
     Preflight request setup
     """
+    print("Setting up Navigator")
     g.wd = Navigator() # Get a PhantomJS session and load it into the request context
 
 @mod.teardown_request
@@ -82,6 +83,7 @@ def schedule():
     /webadvisor/schedule
     Gets the current semester's schedule from WebAdvisor
     """
+    print("Got schedule request")
     wd = g.get("wd", None)
 
     if not wd:
