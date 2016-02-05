@@ -10,21 +10,13 @@ from .navigator import Navigator
 # TODO: Migrate to WebDriver to context manager maybe
 mod = Blueprint('web_advisor', __name__, url_prefix="/webadvisor")
 
-@mod.before_request
-def before_request():
-    """
-    Preflight request setup
-    """
-    g.wd = Navigator() # Get a PhantomJS session and load it into the request context
+def requires_navigator(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        g.wd = Navigator()
+        return f(*args, **kwargs)
+    return decorated_function
 
-@mod.teardown_request
-def teardown_request(exception):
-    """
-    Postflight request cleanup
-    """
-    wd = g.get("wd", None) # Make sure to close the session
-    if not wd:
-        wd.close()
 
 def requires_login(f):
     @wraps(f)
@@ -56,8 +48,7 @@ def login():
     else:
         abort(400)
 
-    wd = g.get("wd", None)
-    cookie_payload = constants.WEB_ADVISOR_COOKIES_TEMPLATE()
+    cookie_payload = constants.WEB_ADVISOR_COOKIES_TEMPLATE.copy()
 
     for name, value in data["cookie"]:
         if name.startswith("__"):
@@ -77,26 +68,30 @@ def login():
     return jsonify({})
 
 @mod.route("/schedule", methods=['GET'])
+@requires_navigator
 @requires_login
 def schedule():
     """
     /webadvisor/schedule
     Gets the current semester's schedule from WebAdvisor
     """
-    wd = g.get("wd", None)
-
-    if not wd:
-        abort(500)
-
     try:
+        wd = g.get("wd", None)
+
         wd.class_schedule()
         wd.find_elements_by_selector("#VAR4").select_by_value("W16")
         wd.find_elements_by_selector("#content > div.screen.WESTS13A > form").submit()
+
+        schedule = wd.execute_script(constants.JS_SCRIPTS["class_schedule_extractor"])
     except:
         wd.get_screenshot_as_file("error.png")
-        abort(500)
+    finally:
+        wd.quit()
 
-    return jsonify(wd.execute_script(constants.JS_SCRIPTS["class_schedule_extractor"])) # Run the parser script on the page and return the script's result
+        if schedule:
+            return jsonify(schedule) # Run the parser script on the page and return the script's result
+        else:
+            abort(500)
     # return send_file(io.BytesIO(wd.get_screenshot_as_png()), attachment_filename='logo.png', mimetype='image/png')
 
 @mod.route("/error", methods=['GET'])
