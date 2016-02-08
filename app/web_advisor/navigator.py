@@ -8,39 +8,40 @@ class Navigator(webdriver.Remote):
     """
     PhantomDriver wrapper class to abstract away WebAdvisor URLs and other nitty-gritty like injecting the session
     """
-    _web_advisor_url = "https://webadvisor.uoguelph.ca/WebAdvisor/WebAdvisor"
-    _login_url = "{}?CONSTITUENCY=WBDF&type=P&pid=UT-LGRQ&PROCESS=-UTAUTH01".format(_web_advisor_url)
-    _class_schedule_url = "{}?CONSTITUENCY=WBST&type=P&pid=ST-WESTS13A".format(_web_advisor_url)
+    __WEB_ADVISOR_URL = "https://webadvisor.uoguelph.ca/WebAdvisor/WebAdvisor"
+    __LOGIN_URL = "{}?CONSTITUENCY=WBDF&type=P&pid=UT-LGRQ&PROCESS=-UTAUTH01".format(__WEB_ADVISOR_URL)
+    __CLASS_SCHEDULE_URL = "{}?CONSTITUENCY=WBST&type=P&pid=ST-WESTS13A".format(__WEB_ADVISOR_URL)
 
-    def __init__(self):
+    __cookies = None
+
+    def __init__(self, cookies):
         """
         Super init and then navigate to the login page since we always want there to be a page immediately
         """
+        self.__cookies = cookies
         super(Navigator, self).__init__(command_executor='http://localhost:4444/wd/hub', desired_capabilities=DesiredCapabilities.PHANTOMJS)
 
     def __enter__(self):
-        self.login_page()
-        WebDriverWait(self, 30, poll_frequency=0.1).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, "#content > div.screen.UTAUTH01 > form"))
-        )
+        # self.login_page()
+        # WebDriverWait(self, 30, poll_frequency=0.1).until(
+        #     EC.presence_of_element_located((By.CSS_SELECTOR, "#content > div.screen.UTAUTH01 > form"))
+        # )
+        self.__inject_session(self.__cookies)
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
         if exc_type is not None:
+            self.get_screenshot_as_file("error.png")
             print("Driver exited with error!")
 
         self.quit()
 
-    def login_page(self):
-        self.get(self._login_url)
-
-    def class_schedule(self):
-        self.get(self._class_schedule_url) # Select the current semester
-
-    def inject_session(self, cookie_payload):
+    def __inject_session(self, cookie_payload):
         """
         Injects a session payload into the WebDriver instance
         """
+        self.login_page()
+
         for cookie in self.get_cookies():
             """
             WebAdvisor sets a unique name for the session cookie based on the machine so we MUST preserve that, however the session
@@ -54,9 +55,25 @@ class Navigator(webdriver.Remote):
 
         for _, cookie in cookie_payload.items(): # There's no bulk cookie addition so add each one individually
             try:
-                self.add_cookie(cookie)
-            except:
+                if cookie["value"]:
+                    self.add_cookie(cookie)
+            except Exception as e:
                 print("Failed to set cookie\n" + str(cookie))
+
+    def login_page(self):
+        self.get(self.__LOGIN_URL)
+
+    def class_schedule(self, term):
+        self.get(self.__CLASS_SCHEDULE_URL) # Select the current semester
+
+        self.find_elements_by_selector("#VAR4").select_by_value(term)
+        self.find_elements_by_selector("#content > div.screen.WESTS13A > form").submit()
+        self.wait_for_selector("#GROUP_Grp_LIST_VAR6 > table")
+
+    def wait_for_selector(self, selector):
+        WebDriverWait(self, 15, poll_frequency=0.1).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, selector))
+        )
 
     def find_elements_by_selector(self, selector):
         """
@@ -65,10 +82,14 @@ class Navigator(webdriver.Remote):
         :param selector: Valid CSS selector for the element
         :return: Returns either a list of elements, or if only one exists the single element. If any elements are <select> tags they are converted to Selenium Select objects
         """
+        find = lambda s: [el if el.tag_name != "select" else Select(el) for el in self.find_elements_by_css_selector(s)] # Convert any <select> tags
 
-        elements = [el if el.tag_name != "select" else Select(el) for el in self.find_elements_by_css_selector(selector)] # Convert any <select> tags
+        elements = find(selector)
+        if not elements:
+            self.wait_for_selector(selector)
+            elements = find(selector)
+
         if len(elements) == 1:
             return elements[0]
 
-        print(elements)
         return elements
