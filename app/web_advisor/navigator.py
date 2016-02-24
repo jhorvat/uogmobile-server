@@ -20,7 +20,7 @@ class Navigator(webdriver.Remote):
         Super init and then navigate to the login page since we always want there to be a page immediately
         """
         self.__cookies = cookies
-        super(Navigator, self).__init__(command_executor='http://localhost:4444/wd/hub', desired_capabilities=DesiredCapabilities.PHANTOMJS)
+        super(Navigator, self).__init__(command_executor='http://192.168.99.100:4444/wd/hub', desired_capabilities=DesiredCapabilities.CHROME)
 
     def __enter__(self):
         self.__inject_session(self.__cookies)

@@ -1,0 +1,18 @@
+web:
+    build: .
+    ports:
+        - "5000:5000"
+    volumes:
+        - .:/opt/webapp
+    links:
+        - chrome
+chrome:
+    image: selenium/node-chrome
+    links:
+        - hub
+    expose:
+        - "5555"
+hub:
+    image: selenium/hub
+    ports:
+        - "4444:4444"

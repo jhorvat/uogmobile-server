@@ -1,0 +1,10 @@
+expirements
+*.pyc
+ghostdriver.log
+config.py
+.sync-config.cson
+__pycache__/
+error.png
+.DS_Store
+Dockerfile
+docker-compose.yml
