@@ -7,7 +7,6 @@ from datetime import datetime, timedelta
 from . import constants
 from .navigator import Navigator
 
-# TODO: Migrate to WebDriver to context manager maybe
 mod = Blueprint('web_advisor', __name__, url_prefix="/webadvisor")
 
 def requires_login(f):
@@ -35,10 +34,16 @@ def login():
     cookie_payload = constants.WEB_ADVISOR_COOKIES_TEMPLATE.copy()
 
     for name, value in data["cookie"]:
-        if name not in cookie_payload and name.isdigit(): # Add the session value to the machine-unique key
-            cookie_payload["token"]["value"] = value
-        else:
-            cookie_payload[name]["value"] = value
+        try:
+            if name not in cookie_payload and name.isdigit(): # Add the session value to the machine-unique key
+                cookie_payload["token"]["value"] = value
+            else:
+                cookie_payload[name]["value"] = value
+
+        except KeyError: # Just swallow bad keys cause we just don't care about things that aren't in the payload template
+            pass
+        except:
+            abort(400)
 
     session["cookies"] = cookie_payload # Save the completed injection payload to the current session
     return jsonify({})
@@ -53,12 +58,10 @@ def schedule():
     schedule = None
 
     with Navigator(session["cookies"]) as wd:
-        # wd.inject_session(session["cookies"])
         wd.class_schedule("W16")
         schedule = wd.execute_script(constants.JS_SCRIPTS["class_schedule_extractor"])
 
     if schedule:
-        print("Got schedule\n" + str(schedule))
         return jsonify(schedule) # Run the parser script on the page and return the script's result
     else:
         abort(500)

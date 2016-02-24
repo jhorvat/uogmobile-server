@@ -3,6 +3,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.support import expected_conditions as EC
+from ..api_error import ApiError
 
 class Navigator(webdriver.Remote):
     """
@@ -22,19 +23,14 @@ class Navigator(webdriver.Remote):
         super(Navigator, self).__init__(command_executor='http://localhost:4444/wd/hub', desired_capabilities=DesiredCapabilities.PHANTOMJS)
 
     def __enter__(self):
-        # self.login_page()
-        # WebDriverWait(self, 30, poll_frequency=0.1).until(
-        #     EC.presence_of_element_located((By.CSS_SELECTOR, "#content > div.screen.UTAUTH01 > form"))
-        # )
         self.__inject_session(self.__cookies)
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        if exc_type is not None:
-            self.get_screenshot_as_file("error.png")
-            print("Driver exited with error!")
-
         self.quit()
+
+        if exc_type is not None:
+            raise ApiError("Driver exited with error", cause=exc_type, status_code=500)
 
     def __inject_session(self, cookie_payload):
         """
@@ -48,7 +44,6 @@ class Navigator(webdriver.Remote):
             info itself isn't cross-referenced so as long as the cookie name and value match indepently we're good
             """
             if cookie["name"].isdigit():
-                print("Unique ID is " + cookie["name"])
                 cookie_payload["token"]["name"] = cookie["name"]
 
         self.delete_all_cookies()
@@ -58,7 +53,7 @@ class Navigator(webdriver.Remote):
                 if cookie["value"]:
                     self.add_cookie(cookie)
             except Exception as e:
-                print("Failed to set cookie\n" + str(cookie))
+                pass
 
     def login_page(self):
         self.get(self.__LOGIN_URL)
