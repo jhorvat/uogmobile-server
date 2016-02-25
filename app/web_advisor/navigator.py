@@ -1,38 +1,51 @@
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.support import expected_conditions as EC
+from flask import current_app as app
+
 from ..api_error import ApiError
 
 class Navigator(webdriver.Remote):
     """
     PhantomDriver wrapper class to abstract away WebAdvisor URLs and other nitty-gritty like injecting the session
     """
-    __WEB_ADVISOR_URL = "https://webadvisor.uoguelph.ca/WebAdvisor/WebAdvisor"
-    __LOGIN_URL = "{}?CONSTITUENCY=WBDF&type=P&pid=UT-LGRQ&PROCESS=-UTAUTH01".format(__WEB_ADVISOR_URL)
-    __CLASS_SCHEDULE_URL = "{}?CONSTITUENCY=WBST&type=P&pid=ST-WESTS13A".format(__WEB_ADVISOR_URL)
+    WEB_ADVISOR_URL = "https://webadvisor.uoguelph.ca/WebAdvisor/WebAdvisor"
+    LOGIN_URL = "{}?CONSTITUENCY=WBDF&type=P&pid=UT-LGRQ&PROCESS=-UTAUTH01".format(WEB_ADVISOR_URL)
+    CLASS_SCHEDULE_URL = "{}?CONSTITUENCY=WBST&type=P&pid=ST-WESTS13A".format(WEB_ADVISOR_URL)
 
-    __cookies = None
+    __cookies__ = None
 
     def __init__(self, cookies):
         """
         Super init and then navigate to the login page since we always want there to be a page immediately
         """
-        self.__cookies = cookies
-        super(Navigator, self).__init__(command_executor='http://192.168.99.100:4444/wd/hub', desired_capabilities=DesiredCapabilities.CHROME)
+        # options = ChromeOptions()
+        # # TODO: Want to add this but might have to create custom selenium containers to do it
+        # options.add_experimental_option("prefs", {"profile.managed_default_content_settings.images": 2})
+
+        super(Navigator, self).__init__(
+            command_executor='http://hub:4444/wd/hub',
+            desired_capabilities=DesiredCapabilities.FIREFOX
+            # desired_capabilities=DesiredCapabilities.CHROME
+            # desired_capabilities=options.to_capabilities()
+        )
+        self.__cookies__ = cookies
 
     def __enter__(self):
-        self.__inject_session(self.__cookies)
+        self.__inject_session__(self.__cookies__)
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.quit()
 
         if exc_type is not None:
-            raise ApiError("Driver exited with error", cause=exc_type, status_code=500)
+            raise ApiError("Driver exited with error", cause=exc_type, status_code=500 if isinstance(exc_type, TimeoutException) else 403)
 
-    def __inject_session(self, cookie_payload):
+    def __inject_session__(self, cookie_payload):
         """
         Injects a session payload into the WebDriver instance
         """
@@ -56,10 +69,10 @@ class Navigator(webdriver.Remote):
                 pass
 
     def login_page(self):
-        self.get(self.__LOGIN_URL)
+        self.get(self.LOGIN_URL)
 
     def class_schedule(self, term):
-        self.get(self.__CLASS_SCHEDULE_URL) # Select the current semester
+        self.get(self.CLASS_SCHEDULE_URL) # Select the current semester
 
         self.find_elements_by_selector("#VAR4").select_by_value(term)
         self.find_elements_by_selector("#content > div.screen.WESTS13A > form").submit()
@@ -67,7 +80,7 @@ class Navigator(webdriver.Remote):
 
     def wait_for_selector(self, selector):
         WebDriverWait(self, 15, poll_frequency=0.1).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, selector))
+            EC.visibility_of_element_located((By.CSS_SELECTOR, selector))
         )
 
     def find_elements_by_selector(self, selector):
@@ -79,10 +92,8 @@ class Navigator(webdriver.Remote):
         """
         find = lambda s: [el if el.tag_name != "select" else Select(el) for el in self.find_elements_by_css_selector(s)] # Convert any <select> tags
 
+        self.wait_for_selector(selector)
         elements = find(selector)
-        if not elements:
-            self.wait_for_selector(selector)
-            elements = find(selector)
 
         if len(elements) == 1:
             return elements[0]

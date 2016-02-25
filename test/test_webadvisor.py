@@ -34,5 +34,4 @@ class WebAdvisorTestCase(unittest.TestCase):
         self.assertEqual(login.status_code, 200)
 
         schedule = self.app.get("/webadvisor/schedule")
-        data = json.loads(schedule.get_data().decode("UTF8"))
-        print(data)
+        self.assertEqual(schedule.status_code, 403)
