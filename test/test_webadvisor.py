@@ -18,8 +18,11 @@ class WebAdvisorTestCase(unittest.TestCase):
     def test_login_cookie_parse(self):
         self.assertEqual(self.login(self.OLD_COOKIE).status_code, 200)
 
+    def test_login_no_data(self):
+        self.assertEqual(self.app.post("/webadvisor/login").status_code, 400)
+
     def test_get_schedule(self):
-        cookie = input("Give me a valid WebAdvisor cookie: ")
+        cookie = input("\nGive me a valid WebAdvisor cookie: ")
         login = self.login(cookie)
         self.assertEqual(login.status_code, 200)
 
