@@ -25,7 +25,7 @@ def requires_login(f):
 def login():
     data = request.get_json()
 
-    if "cookie" in data and data["cookie"]:
+    if data and "cookie" in data and data["cookie"]:
         # Separate the cookies string into a list of key, value tuples
         data["cookie"] = [cookie.split("=", 1) for cookie in data["cookie"].replace(" ", "").split(";")]
     else:
