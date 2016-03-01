@@ -5,9 +5,12 @@ web:
     volumes:
         - .:/opt/webapp
     links:
-        - chrome
-chrome:
-    image: selenium/node-chrome
+        - hub
+        - browser
+browser:
+    image: jhorvat/selenium-node-phantomjs
+    # image: selenium/node-firefox
+    # image: selenium/node-chrome
     links:
         - hub
     expose:
