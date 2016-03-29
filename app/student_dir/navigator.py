@@ -11,21 +11,14 @@ from ..api_error import ApiError
 
 class Navigator(webdriver.Remote):
     """
-    PhantomDriver wrapper class to abstract away WebAdvisor URLs and other nitty-gritty like injecting the session
+    WebDriver wrapper class to abstract away Central lookup
     """
-    WEB_ADVISOR_URL = "https://webadvisor.uoguelph.ca/WebAdvisor/WebAdvisor"
-    LOGIN_URL = "{}?CONSTITUENCY=WBDF&type=P&pid=UT-LGRQ&PROCESS=-UTAUTH01".format(WEB_ADVISOR_URL)
-    CLASS_SCHEDULE_URL = "{}?CONSTITUENCY=WBST&type=P&pid=ST-WESTS13A".format(WEB_ADVISOR_URL)
-
-    __cookies__ = None
+    DIRECTORY_URL = "http://www.uoguelph.ca/directory/index.cfm?search=complex"
 
     def __init__(self, cookies):
         """
         Super init and then navigate to the login page since we always want there to be a page immediately
         """
-        # options = ChromeOptions()
-        # # TODO: Want to add this but might have to create custom selenium containers to do it
-        # options.add_experimental_option("prefs", {"profile.managed_default_content_settings.images": 2})
 
         super(Navigator, self).__init__(
             command_executor='http://hub:4444/wd/hub',
@@ -33,10 +26,8 @@ class Navigator(webdriver.Remote):
             desired_capabilities=DesiredCapabilities.CHROME
             # desired_capabilities=options.to_capabilities()
         )
-        self.__cookies__ = cookies
 
     def __enter__(self):
-        self.__inject_session__(self.__cookies__)
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -45,38 +36,16 @@ class Navigator(webdriver.Remote):
         if exc_type is not None:
             raise ApiError("Driver exited with error", cause=exc_type, status_code=500 if isinstance(exc_type, TimeoutException) else 403)
 
-    def __inject_session__(self, cookie_payload):
-        """
-        Injects a session payload into the WebDriver instance
-        """
-        self.login_page()
+    def lookup_student(self, email):
+        self.get(self.DIRECTORY_URL)
 
-        for cookie in self.get_cookies():
-            """
-            WebAdvisor sets a unique name for the session cookie based on the machine so we MUST preserve that, however the session
-            info itself isn't cross-referenced so as long as the cookie name and value match indepently we're good
-            """
-            if cookie["name"].isdigit():
-                cookie_payload["token"]["name"] = cookie["name"]
+        email_field = self.find_elements_by_selector("#main-column > table > tbody > tr > td > form > fieldset > div:nth-child(5) > input")
+        email_field.send_keys(email)
 
-        self.delete_all_cookies()
+        self.find_elements_by_selector('#main-column > table > tbody > tr > td > form > fieldset > input[type="submit"]:nth-child(15)').click()
 
-        for _, cookie in cookie_payload.items(): # There's no bulk cookie addition so add each one individually
-            try:
-                if cookie["value"]:
-                    self.add_cookie(cookie)
-            except Exception as e:
-                pass
-
-    def login_page(self):
-        self.get(self.LOGIN_URL)
-
-    def class_schedule(self, term):
-        self.get(self.CLASS_SCHEDULE_URL) # Select the current semester
-
-        self.find_elements_by_selector("#VAR4").select_by_value(term)
-        self.find_elements_by_selector("#content > div.screen.WESTS13A > form").submit()
-        self.wait_for_selector("#GROUP_Grp_LIST_VAR6 > table")
+        result_header = self.find_elements_by_selector("#main-column > table > tbody > tr:nth-child(2) > td > table > tbody > tr:nth-child(1) > td")
+        print(result_header.text)
 
     def wait_for_selector(self, selector):
         WebDriverWait(self, 15, poll_frequency=0.1).until(
