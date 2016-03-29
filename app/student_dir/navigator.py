@@ -15,7 +15,7 @@ class Navigator(webdriver.Remote):
     """
     DIRECTORY_URL = "http://www.uoguelph.ca/directory/index.cfm?search=complex"
 
-    def __init__(self, cookies):
+    def __init__(self):
         """
         Super init and then navigate to the login page since we always want there to be a page immediately
         """
@@ -39,13 +39,17 @@ class Navigator(webdriver.Remote):
     def lookup_student(self, email):
         self.get(self.DIRECTORY_URL)
 
-        email_field = self.find_elements_by_selector("#main-column > table > tbody > tr > td > form > fieldset > div:nth-child(5) > input")
-        email_field.send_keys(email)
+        self.find_elements_by_selector("#main-column > table > tbody > tr > td > form > fieldset > div:nth-child(5) > input") \
+            .send_keys(email)
 
-        self.find_elements_by_selector('#main-column > table > tbody > tr > td > form > fieldset > input[type="submit"]:nth-child(15)').click()
+        self.find_elements_by_selector('#main-column > table > tbody > tr > td > form > fieldset > input[type="submit"]:nth-child(15)') \
+            .click()
 
-        result_header = self.find_elements_by_selector("#main-column > table > tbody > tr:nth-child(2) > td > table > tbody > tr:nth-child(1) > td")
-        print(result_header.text)
+        search_result_header = self.find_elements_by_selector("#main-column > table > tbody > tr:nth-child(2) > td > table > tbody > tr:nth-child(1) > td")
+
+        return None \
+            if "Found 1 record" not in search_result_header.text else \
+            self.find_elements_by_selector("#main-column > table > tbody > tr:nth-child(2) > td > table > tbody > tr.vcard > td > span.fn") .text
 
     def wait_for_selector(self, selector):
         WebDriverWait(self, 15, poll_frequency=0.1).until(
