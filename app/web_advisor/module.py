@@ -46,7 +46,9 @@ def login():
             abort(400)
 
     session["cookies"] = cookie_payload # Save the completed injection payload to the current session
-    return jsonify({})
+    return jsonify({
+        "cookie": str(cookie_payload)
+    })
 
 @mod.route("/schedule", methods=['GET'])
 @requires_login
